@@ -1,0 +1,3077 @@
+<html>
+<head>
+  <style>
+    @font-face {
+      font-family: 'JerryFont';
+      src: url('/JerryText.ttf') format('truetype');
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      font-family: 'JerryFont', monospace;
+      overflow: hidden;
+    }
+
+    #windows-screen {
+      opacity: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('/Bliss.jpg') center center;
+      background-size: cover;
+      transition: opacity 2s;
+    }
+
+    .desktop-icon {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 50px;
+      text-align: center;
+      cursor: move; 
+      user-select: none;
+      margin-bottom: 20px; 
+      z-index: 1; 
+      transition: none;
+    }
+
+    .desktop-icon + .desktop-icon {
+      top: 100px;
+    }
+
+    .desktop-icon img {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 5px;
+    }
+
+    .desktop-icon span {
+      display: block;
+      color: white;
+      font-family: 'JerryFont';
+      text-shadow: 1px 1px 1px black;
+      font-size: 12px;
+    }
+
+    #taskbar {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: 40px;
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #taskbar-clock {
+      padding: 5px 10px;
+      margin-right: 5px;
+      font-family: 'JerryFont';
+      background: #c0c0c0;
+      border: 2px inset #fff;
+    }
+
+    #start-button {
+      margin: 2px 5px;
+      padding: 5px 10px;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      font-family: 'JerryFont';
+      cursor: pointer;
+    }
+
+    #start-menu {
+      display: none;
+      position: fixed;
+      bottom: 42px;
+      left: 0;
+      width: 200px;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+    }
+
+    .start-menu-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      cursor: pointer;
+      font-family: 'JerryFont';
+    }
+
+    .start-menu-item:hover {
+      background: #000080;
+      color: #fff;
+    }
+
+    .start-menu-item img {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+
+    .start-menu-folder {
+      position: relative;
+    }
+
+    .start-menu-folder:hover .submenu {
+      display: block;
+    }
+
+    .submenu {
+      display: none;
+      position: absolute;
+      left: 100%;
+      top: 0;
+      width: 200px;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    #start-button.active {
+      background: #808080;
+      border: 2px inset #fff;
+    }
+
+    .jerry-container {
+      position: absolute;
+      transition: all 0.5s ease;
+      cursor: grab;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .jerry-container:active {
+      cursor: grabbing;
+    }
+
+    .jerry {
+      width: 100px;
+      height: 100px;
+      background: url('/JerryTheAssistantNew.png') center center;
+      background-size: contain;
+      transition: transform 0.3s;
+    }
+
+    .jerry.squished {
+      transform: scale(0.8, 0.7);
+    }
+
+    .speech-bubble {
+      position: absolute;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 10px;
+      padding: 10px;
+      max-width: 200px;
+      min-width: 150px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .shotgun {
+      display: none;
+      position: absolute;
+      width: 200px;
+      height: 100px;
+      background: url('/JerrysShotgun.png') center center;
+      background-size: contain;
+      background-repeat: no-repeat;
+      transform-origin: center;
+    }
+
+    #music-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 300px;
+      transition: opacity 0.3s;
+      cursor: move;
+      user-select: none;
+    }
+
+    #music-window.breaking {
+      animation: break-apart 0.5s forwards;
+    }
+
+    @keyframes break-apart {
+      to {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+        filter: url(#noise);
+      }
+    }
+
+    #music-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .close-btn {
+      background: #c0c0c0;
+      border: 1px outset #fff;
+      cursor: pointer;
+    }
+
+    .music-item {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .music-item:hover {
+      border: 1px dotted #000;
+    }
+
+    .music-item img {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+
+    #chat-input {
+      position: fixed;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      padding: 5px;
+      font-family: 'JerryFont';
+      background: #fff;
+      border: 2px inset #c0c0c0;
+    }
+
+    .boot-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      z-index: 1000;
+      transition: opacity 1s;
+    }
+
+    #notepad-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 400px;
+    }
+
+    #notepad-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #notepad-content {
+      width: 100%;
+      height: calc(100% - 30px);
+      resize: none;
+      font-family: 'JerryFont';
+      padding: 5px;
+      border: 2px inset #fff;
+    }
+
+    #paint-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 600px;
+      height: 400px;
+    }
+
+    #paint-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .paint-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .paint-tool {
+      padding: 3px 8px;
+      margin: 0 2px;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      cursor: pointer;
+    }
+
+    .paint-tool.active {
+      border: 2px inset #fff;
+    }
+
+    #paint-canvas {
+      background: #fff;
+      border: 2px inset #fff;
+      cursor: crosshair;
+    }
+
+    #set-as-background {
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 3px 8px;
+      font-family: 'JerryFont';
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    #set-as-background:active {
+      border: 2px inset #fff;
+    }
+
+    #chat-window {
+      display: none;
+      position: fixed;
+      top: 20%;
+      right: 20%;
+      width: 500px;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      z-index: 1001;
+    }
+
+    #chat-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #chat-messages {
+      height: 200px;
+      overflow-y: auto;
+      margin: 10px;
+      border: 1px solid #000;
+      padding: 5px;
+    }
+
+    #chat-messages div {
+      margin: 5px 0;
+      word-wrap: break-word;
+    }
+
+    #chat-messages div strong {
+      color: #000080;
+      margin-right: 5px;
+    }
+
+    .input-container {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+    }
+
+    #chat-room-input {
+      flex: 1;
+      padding: 5px;
+      border: 2px inset #c0c0c0;
+      maxlength="200";
+    }
+
+    .char-count {
+      font-size: 12px;
+      color: #666;
+      margin-right: 10px;
+      font-family: 'JerryFont';
+    }
+
+    .char-count.limit {
+      color: #ff0000;
+    }
+
+    #send-button {
+      padding: 5px 10px;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      cursor: pointer;
+    }
+
+    #settings-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 400px;
+    }
+
+    #settings-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .wallpaper-option {
+      cursor: pointer;
+    }
+
+    .wallpaper-option img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border: 1px solid #000;
+    }
+
+    #minesweeper-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 300px;
+    }
+
+    #minesweeper-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+      cursor: move;
+    }
+
+    .minesweeper-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border: 2px inset #fff;
+      margin-bottom: 10px;
+    }
+
+    .mines-counter, .time-counter {
+      background: #000;
+      color: #f00;
+      font-family: 'Digital', monospace;
+      padding: 5px 10px;
+      border: 2px inset #fff;
+    }
+
+    #minesweeper-reset {
+      font-size: 24px;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      cursor: pointer;
+      padding: 2px 10px;
+    }
+
+    #minesweeper-grid {
+      border: 2px inset #fff;
+      display: grid;
+      grid-template-columns: repeat(9, 30px);
+      grid-template-rows: repeat(9, 30px);
+      gap: 1px;
+      background: #808080;
+    }
+
+    .minesweeper-cell {
+      width: 30px;
+      height: 30px;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .minesweeper-cell.revealed {
+      border: 1px solid #808080;
+      background: #c0c0c0;
+    }
+
+    .minesweeper-cell.mine {
+      background: #ff0000;
+    }
+
+    .minesweeper-cell.flagged {
+      background: #c0c0c0;
+    }
+
+    #browser-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 800px;
+      height: 600px;
+    }
+
+    #browser-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #browser-window2 {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 747px;
+      height: 450px;
+    }
+
+    #browser-window2 .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+      cursor: move;
+    }
+
+    .fullscreen-btn {
+      background: #c0c0c0;
+      border: 1px outset #fff;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+
+    #browser-window2.fullscreen {
+      width: 100vw !important;
+      height: calc(100vh - 42px) !important;
+      top: 0 !important;
+      left: 0 !important;
+      transform: none !important;
+      z-index: 10000;
+    }
+
+    #browser-window2.fullscreen #browser-frame2 {
+      height: calc(100vh - 72px);
+    }
+
+    #browser-frame2 {
+      width: 100%;
+      height: calc(100% - 30px);
+    }
+
+    #recycle-bin-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 400px;
+      height: 300px;
+    }
+
+    #recycle-bin-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+      cursor: move;
+    }
+
+    #recycle-bin-contents {
+      height: calc(100% - 30px);
+      overflow-y: auto;
+      background: #fff;
+      border: 2px inset #fff;
+      padding: 10px;
+    }
+
+    .recycled-item {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      margin: 2px 0;
+      cursor: pointer;
+      font-family: 'JerryFont';
+      user-select: none;
+      cursor: move;
+    }
+
+    .recycled-item:hover {
+      background: #000080;
+      color: #fff;
+    }
+
+    .recycled-item img {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+
+    .selection-box {
+      position: absolute;
+      border: 1px solid #0078D7;
+      background-color: rgba(0, 120, 215, 0.1);
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    #command-prompt-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #000;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 600px;
+      height: 400px;
+      font-family: 'Courier New', monospace;
+      color: #fff;
+      z-index: 100;
+    }
+
+    #command-prompt-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JerryFont';
+      cursor: move;
+    }
+
+    #command-output {
+      height: calc(100% - 50px);
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    #command-input-line {
+      display: flex;
+      align-items: center;
+      color: #fff;
+    }
+
+    .prompt {
+      margin-right: 5px;
+      color: #fff;
+    }
+
+    #command-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      font-size: 1em;
+      outline: none;
+      caret-color: #fff;
+    }
+
+    .glitch-effect {
+      animation: glitch 0.2s infinite;
+      filter: invert(1);
+    }
+
+    @keyframes glitch {
+      0% {
+        transform: translate(0);
+      }
+      25% {
+        transform: translate(-5px, 5px);
+      }
+      50% {
+        transform: translate(5px, -5px);
+      }
+      75% {
+        transform: translate(-3px, -3px);
+      }
+      100% {
+        transform: translate(0);
+      }
+    }
+
+    .button-glitch {
+      animation: button-chaos 0.5s infinite;
+    }
+
+    @keyframes button-chaos {
+      0% { transform: translate(0); }
+      20% { transform: translate(30px, -20px); }
+      40% { transform: translate(-20px, 40px); }
+      60% { transform: translate(10px, -40px); }
+      80% { transform: translate(-30px, 20px); }
+      100% { transform: translate(0); }
+    }
+
+    #blue-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #0000aa;
+      color: #ffffff;
+      padding: 50px;
+      font-family: "Courier New", monospace;
+      z-index: 99999;
+      transform: none !important;
+      filter: none !important;
+    }
+
+    #blue-screen pre {
+      white-space: pre-wrap;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .owner-username {
+      /* No specific color to match others */
+    }
+
+    .owner-tag {
+      color: yellow;
+    }
+    
+    .custom-wallpaper-button {
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 5px 10px;
+      font-family: 'JerryFont';
+      cursor: pointer;
+      display: block;
+      margin: 10px auto;
+      width: fit-content;
+    }
+
+    .custom-wallpaper-button:active {
+      border: 2px inset #fff;
+    }
+
+    #custom-wallpaper-input {
+      display: none;
+    }
+
+    #achievement-container {
+      position: fixed;
+      bottom: 50px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .achievement-popup {
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 5px;
+      font-family: 'JerryFont';
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+      max-width: 300px;
+    }
+
+    .achievement-popup .icon {
+      background: #ffd700;
+      color: #000;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .achievement-popup .content {
+      flex: 1;
+    }
+
+    .achievement-popup .title {
+      font-weight: bold;
+      color: #ffd700;
+      margin-bottom: 5px;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+
+    #achievements-window {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 15px;
+      width: 400px;
+      height: 500px;
+      font-family: 'JerryFont';
+      cursor: move;  
+      z-index: 1000; 
+    }
+
+    #achievements-window .title-bar {
+      background: #000080;
+      color: #fff;
+      padding: 5px;
+      margin: -15px -15px 15px -15px;
+      display: flex;
+      justify-content: space-between;
+      cursor: move;  
+    }
+
+    #achievements-list {
+      height: calc(100% - 50px);
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .achievement-item {
+      background: #f0f0f0;
+      border: 1px solid #808080;
+      margin-bottom: 10px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .achievement-item.locked {
+      opacity: 0.5;
+    }
+
+    .achievement-icon {
+      background: #ffd700;
+      color: #000;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .achievement-info {
+      flex: 1;
+    }
+
+    .achievement-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .achievements-stats {
+      text-align: center;
+      padding: 10px;
+      border-top: 2px inset #fff;
+      font-family: 'JerryFont';
+    }
+  </style>
+</head>
+<body>
+  <div class="boot-screen">
+    Windows 95 is loading...
+  </div>
+
+  <div id="windows-screen">
+    <div class="desktop-icon">
+      <img src="/recyclebin.png" alt="Recycle Bin" draggable="false">
+      <span>Recycle Bin</span>
+    </div>
+    <div class="desktop-icon" id="paint-shortcut">
+      <img src="/paint.png" alt="Paint" draggable="false">
+      <span>Paint</span>
+    </div>
+    <div class="jerry-container">
+      <div class="speech-bubble"></div>
+      <div class="jerry"></div>
+      <div class="shotgun"></div>
+    </div>
+    
+    <div id="music-window">
+      <div class="title-bar">
+        <span>Music Player</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <div class="music-item" data-song="tetris">
+        <img src="/MusicFile.png" alt="music">
+        <span>Tetris Theme</span>
+      </div>
+      <div class="music-item" data-song="minecraft">
+        <img src="/MusicFile.png" alt="music">
+        <span>Minecraft Music</span>
+      </div>
+      <div class="music-item" data-song="loonboon">
+        <img src="/MusicFile.png" alt="music">
+        <span>Loonboon Theme</span>
+      </div>
+    </div>
+
+    <div id="notepad-window">
+      <div class="title-bar">
+        <span>Notepad</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <textarea id="notepad-content"></textarea>
+    </div>
+
+    <div id="paint-window">
+      <div class="title-bar">
+        <span>Paint</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <div class="paint-toolbar">
+        <button class="paint-tool" data-tool="pencil">Pencil</button>
+        <button class="paint-tool" data-tool="fill">Fill</button>
+        <button class="paint-tool" data-tool="eraser">Eraser</button>
+        <input type="color" id="color-picker" value="#000000">
+        <div class="thickness-control">
+          <label>Thickness:</label>
+          <input type="range" id="thickness-slider" min="1" max="50" value="2">
+        </div>
+        <button id="set-as-background">Set as Background</button>
+      </div>
+      <canvas id="paint-canvas"></canvas>
+    </div>
+    
+    <div id="chat-window">
+      <div class="title-bar">
+        <span>Chat Room</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <div id="chat-messages"></div>
+      <div class="input-container">
+        <span class="char-count">0/200</span>
+        <input type="text" id="chat-room-input" placeholder="Type your message..." maxlength="200">
+        <button id="send-button">Send</button>
+      </div>
+    </div>
+
+    <div id="settings-window">
+      <div class="title-bar">
+        <span>Settings</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <div style="padding: 10px;">
+        <h3 style="font-family: 'JerryFont'; margin-top: 0;">Wallpaper</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+          <div class="wallpaper-option" data-wallpaper="/Ascent.jpg">
+            <img src="/Ascent.jpg">
+            <div style="text-align: center; font-family: 'JerryFont'; margin-top: 5px;">Ascent</div>
+          </div>
+          <div class="wallpaper-option" data-wallpaper="/Autumn.jpg">
+            <img src="/Autumn.jpg">
+            <div style="text-align: center; font-family: 'JerryFont'; margin-top: 5px;">Autumn</div>
+          </div>
+          <div class="wallpaper-option" data-wallpaper="/Azul.jpg">
+            <img src="/Azul.jpg">
+            <div style="text-align: center; font-family: 'JerryFont'; margin-top: 5px;">Azul</div>
+          </div>
+          <div class="wallpaper-option" data-wallpaper="/Bliss.jpg">
+            <img src="/Bliss.jpg">
+            <div style="text-align: center; font-family: 'JerryFont'; margin-top: 5px;">Bliss</div>
+          </div>
+        </div>
+        <input type="file" id="custom-wallpaper-input" accept="image/*">
+        <button class="custom-wallpaper-button" onclick="document.getElementById('custom-wallpaper-input').click()">Import Wallpaper</button>
+        
+        <h3 style="font-family: 'JerryFont'; margin-top: 20px;">Jerry Settings</h3>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="mute-jerry">
+          <label for="mute-jerry" style="font-family: 'JerryFont';">Mute Jerry</label>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+          <input type="checkbox" id="uncensor-jerry">
+          <label for="uncensor-jerry" style="font-family: 'JerryFont';">Uncensor Jerry's Language</label>
+        </div>
+      </div>
+    </div>
+
+    <div id="minesweeper-window">
+      <div class="title-bar">
+        <span>Minesweeper</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <div class="minesweeper-controls">
+        <div class="mines-counter">000</div>
+        <button id="minesweeper-reset">&#x1f642;</button>
+        <div class="time-counter">000</div>
+      </div>
+      <div id="minesweeper-grid"></div>
+    </div>
+
+    <div id="browser-window">
+      <div class="title-bar">
+        <span>PvZ</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <iframe id="browser-frame" src="https://en.gameslol.net/data/pvz/en/index.php" style="width: 100%; height: calc(100% - 30px); border: none;">
+      </iframe>
+    </div>
+
+    <div id="browser-window2">
+      <div class="title-bar">
+        <span>Bloo Kid 2</span>
+        <div>
+          <button class="fullscreen-btn">&#x25a1;</button>
+          <button class="close-btn">&#xd7;</button>
+        </div>
+      </div>
+      <iframe id="browser-frame2" src="https://html5.gamemonetize.co/yjult3xfcqnd7t6rnqb9z93w9u2101iy/" style="width: 100%; height: calc(100% - 30px); border: none;">
+      </iframe>
+    </div>
+
+    <div id="recycle-bin-window">
+      <div class="title-bar">
+        <span>Recycle Bin</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <div id="recycle-bin-contents"></div>
+    </div>
+
+    <div id="command-prompt-window">
+      <div class="title-bar" style="font-family: 'JerryFont';">
+        <span>Command Prompt</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <div id="command-output"></div>
+      <div id="command-input-line">
+        <span class="prompt">C:\></span>
+        <input type="text" id="command-input" spellcheck="false">
+      </div>
+    </div>
+
+    <input type="text" id="chat-input" placeholder="Talk to Jerry...">
+    
+    <div id="taskbar">
+      <button id="start-button">Start</button>
+      <div id="start-menu">
+        <div class="start-menu-item start-menu-folder">
+          <img src="/directory_closed-4.png" alt="Games">
+          <span>Games</span>
+          <div class="submenu">
+            <div class="start-menu-item" id="start-minesweeper">
+              <img src="/minesweeper-02.png" alt="Minesweeper">
+              <span>Minesweeper</span>
+            </div>
+            <div class="start-menu-item" id="start-browser">
+              <img src="/Icon116.png" alt="PvZ">
+              <span>PvZ</span>
+            </div>
+            <div class="start-menu-item" id="start-browser2">
+              <img src="/blookid2icon.png" alt="Bloo Kid 2">
+              <span>Bloo Kid 2</span>
+            </div>
+          </div>
+        </div>
+        <div class="start-menu-item start-menu-folder">
+          <img src="/directory_closed-4.png" alt="Utilities">
+          <span>Utilities</span>
+          <div class="submenu">
+            <div class="start-menu-item" id="start-settings">
+              <img src="/settings2.png" alt="Settings">
+              <span>Settings</span>
+            </div>
+            <div class="start-menu-item" id="start-command-prompt">
+              <img src="/console_prompt-0.png" alt="Command Prompt">
+              <span>Command Prompt</span>
+            </div>
+            <div class="start-menu-item" id="start-achievements">
+              <img src="/mouse-0.png" alt="Achievements">
+              <span>Achievements</span>
+            </div>
+          </div>
+        </div>
+        <div class="start-menu-item" id="start-notepad">
+          <img src="/notepad.png" alt="Notepad">
+          <span>Notepad</span>
+        </div>
+        <div class="start-menu-item" id="start-music">
+          <img src="/MusicFile.png" alt="Music">
+          <span>Music Player</span>
+        </div>
+        <div class="start-menu-item" id="start-paint">
+          <img src="/paint.png" alt="Paint">
+          <span>Paint</span>
+        </div>
+        <div class="start-menu-item" id="start-chat">
+          <img src="/chat.png" alt="Chat">
+          <span>Chat Room</span>
+        </div>
+      </div>
+      <div id="taskbar-clock">12:00 AM</div>
+    </div>
+
+    <div id="blue-screen">
+      <pre>
+A fatal exception 0E has occurred at 0028:C0011E36 in VXD VMM(01) +00010E36. The current application will be terminated.
+
+* Press any key to terminate the current application
+* Press CTRL+ALT+DEL to restart your computer. You will
+  lose any unsaved information in all applications.
+
+Error: JERRY_NOT_FOUND
+The system cannot locate the specified assistant.
+Critical system files may be corrupted or missing.
+
+Press any key to continue _</pre>
+    </div>
+
+    <audio id="jerry-enter" src="/JerryEnterNew.mp3"></audio>
+    <audio id="jerry-talk" src="/JerryTalk.wav"></audio>
+    <audio id="message-send" src="/MessageSend.mp3"></audio>
+    <audio id="tetris-theme" src="/TetrisTheme.mp3" loop></audio>
+    <audio id="minecraft-music" src="/MinecraftMusics.mp3" loop></audio>
+    <audio id="loonboon-theme" src="/LoonboonTheme.mp3" loop></audio>
+    <audio id="shotgun-load" src="/JerryShotgunLoad.mp3"></audio>
+    <audio id="shotgun-rack" src="/JerryShotgunRack.mp3"></audio>
+    <audio id="shotgun-shoot" src="/JerryShotgunShoot.mp3"></audio>
+    <audio id="windows-startup" src="/windows95startup.mp3"></audio>
+    <audio id="beep-sound" src="/1_Beep.wav" loop></audio>
+
+    <div id="achievement-container"></div>
+
+    <div id="achievements-window">
+      <div class="title-bar">
+        <span>Achievements</span>
+        <button class="close-btn">&#xd7;</button>
+      </div>
+      <div id="achievements-list">
+        <!-- Achievement items will be added here dynamically -->
+      </div>
+      <div class="achievements-stats">
+        <span id="achievements-progress">0/7 Achievements Unlocked</span>
+      </div>
+    </div>
+
+    <script>
+      function safeEscapeHTML(str) {
+        if (!str) return '';
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function pointShotgunAt(x, y, shotgunElement, jerryElement) {
+        if (!shotgunElement) {
+          shotgunElement = document.querySelector('.shotgun');
+        }
+        if (!jerryElement) {
+          jerryElement = document.querySelector('.jerry-container'); 
+        }
+
+        const jerryRect = jerryElement.getBoundingClientRect();
+        const jerryX = jerryRect.left + jerryRect.width/2;
+        const jerryY = jerryRect.top + jerryRect.height/2;
+
+        // Calculate angle between Jerry and target point
+        const angle = Math.atan2(y - jerryY, x - jerryX) * 180 / Math.PI;
+        
+        shotgunElement.style.transform = `rotate(${angle}deg)`;
+        shotgunElement.style.transformOrigin = 'center';
+        shotgunElement.style.left = '-50px';
+        shotgunElement.style.top = '25px';
+        shotgunElement.style.display = 'block';
+
+        // Position shotgun relative to Jerry
+        if (angle > 90 || angle < -90) {
+          shotgunElement.style.transform = `rotate(${angle + 180}deg) scaleY(-1)`;
+        }
+      }
+
+      function shootMusicWindow() {
+        if (!document.getElementById('music-window')) return;
+
+        const shotgun = document.querySelector('.shotgun');
+        const jerry = document.querySelector('.jerry-container');
+
+        if (shotgun && jerry) {
+          // Play shotgun sounds in sequence
+          const load = document.getElementById('shotgun-load');
+          const rack = document.getElementById('shotgun-rack');
+          const shoot = document.getElementById('shotgun-shoot');
+
+          safePlayAudio(load);
+          setTimeout(() => {
+            safePlayAudio(rack);
+            setTimeout(() => {
+              safePlayAudio(shoot);
+              // Add visual effect
+              const musicWindow = document.getElementById('music-window');
+              musicWindow.classList.add('breaking');
+              setTimeout(() => {
+                musicWindow.style.display = 'none';
+                musicWindow.classList.remove('breaking');
+                document.getElementById('tetris-theme').pause();
+                document.getElementById('minecraft-music').pause();
+                document.getElementById('loonboon-theme').pause();
+                musicPlaying = false;
+
+                // Hide shotgun after shooting
+                shotgun.style.display = 'none';
+
+                addToMessageQueue("I ****** warned you about that Tetris theme!");
+              }, 500);
+            }, 500);
+          }, 500);
+        }
+      }
+
+      let lastMousePosition = { x: 0, y: 0 };
+      let currentTool = 'pencil';
+      let isDrawing = false;
+      let ctx;
+      let canSquishJerry = true;
+      let room = new WebsimSocket();
+      let isSelecting = false;
+      let selectionBox = null;
+      let selectionStart = { x: 0, y: 0 };
+      let isDraggingJerry = false;
+      let jerryDragOffset = { x: 0, y: 0 };
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let recycleBinItems = [];
+      let recycleBinDoubleClickTimer = null;
+      let paintIconDragging = false;
+      let paintIconOffset = { x: 0, y: 0 };
+      let recycleBinDragging = false;
+      let recycleBinOffset = { x: 0, y: 0 };
+      const GRID_SIZE = 20;
+      let ownerUsername = 'JRJAXLAVA'; // Hardcode the owner username
+      let currentUser = null;
+      let isJerryUncensored = false;
+      let jerryLines = ["God, I'm so ******* bored. Say something interesting for once.", "I've seen screensavers with more personality than your dumb ***.", "Are you still there? Or did you finally get a life?", "I miss Windows 98. At least it crashed often enough to keep things exciting.", "Your desktop organization skills are absolute ****.", "Hey, at least you're not using Vista. That would've been rock bottom.", "Is your Caps Lock stuck, or are you just that excited?", "I've met Clippy with better conversation skills, and that paperclip was a moron."];
+      let typing = false;
+      let musicPlaying = false;
+      let messageQueue = [];
+      let processingMessage = false;
+      let lastActivityTime = Date.now();
+      let inactivityCheckInterval;
+      let currentlyDragging = null;
+      let dragOffset = { x: 0, y: 0 };
+      let startMenuOpen = false;
+      let isJerryMuted = false;
+      let jerryInstances = [];
+
+      document.addEventListener('mousemove', e => {
+        lastMousePosition.x = e.clientX;
+        lastMousePosition.y = e.clientY;
+      });
+
+      document.getElementById('windows-screen').addEventListener('mousedown', function (e) {
+        if (e.button === 2) {
+          e.preventDefault();
+          isSelecting = true;
+          selectionBox = document.createElement('div');
+          selectionBox.className = 'selection-box';
+          selectionStart = {
+            x: e.clientX,
+            y: e.clientY
+          };
+          selectionBox.style.left = e.clientX + 'px';
+          selectionBox.style.top = e.clientY + 'px';
+          selectionBox.style.width = '0px';
+          selectionBox.style.height = '0px';
+          document.getElementById('windows-screen').appendChild(selectionBox);
+        }
+      });
+
+      document.getElementById('windows-screen').addEventListener('mousemove', function (e) {
+        if (isSelecting && selectionBox) {
+          const width = e.clientX - selectionStart.x;
+          const height = e.clientY - selectionStart.y;
+          if (width < 0) {
+            selectionBox.style.left = e.clientX + 'px';
+            selectionBox.style.width = Math.abs(width) + 'px';
+          } else {
+            selectionBox.style.left = selectionStart.x + 'px';
+            selectionBox.style.width = width + 'px';
+          }
+          if (height < 0) {
+            selectionBox.style.top = e.clientY + 'px';
+            selectionBox.style.height = Math.abs(height) + 'px';
+          } else {
+            selectionBox.style.top = selectionStart.y + 'px';
+            selectionBox.style.height = height + 'px';
+          }
+        }
+      });
+
+      document.getElementById('windows-screen').addEventListener('mouseup', function (e) {
+        if (e.button === 2 && isSelecting) {
+          isSelecting = false;
+          if (selectionBox && selectionBox.parentNode) {
+            selectionBox.parentNode.removeChild(selectionBox);
+          }
+          selectionBox = null;
+        }
+      });
+
+      document.getElementById('windows-screen').addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+      });
+
+      async function getUser() {
+        try {
+          const user = await window.websim.getUser();
+          currentUser = user;
+          return user.username;
+        } catch (error) {
+          return "user";
+        }
+      }
+
+      async function getOwnerUsername() {
+        try {
+          ownerUsername = 'JRJAXLAVA'; // Hardcode the owner username
+        } catch (error) {
+          console.error('Error getting owner username:', error);
+          ownerUsername = 'JRJAXLAVA'; // default to 'JRJAXLAVA' if error
+        }
+      }
+
+      async function initialize() {
+        await getOwnerUsername();
+        const startupSound = document.getElementById('windows-startup');
+        startupSound.volume = 0.5;
+        safePlayAudio(startupSound);
+        const username = await getUser();
+        const enterSound = document.getElementById('jerry-enter');
+        safePlayAudio(enterSound);
+        setTimeout(() => {
+          document.querySelector('.boot-screen').style.opacity = '0';
+          document.getElementById('windows-screen').style.opacity = '1';
+          setTimeout(() => {
+            document.querySelector('.boot-screen').style.display = 'none';
+            addToMessageQueue(`Well, well, well... if it isn't @${username}. Need something, or are you just here to waste my time?`);
+          }, 1000);
+        }, 1000);
+
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        const jerry = document.querySelector('.jerry-container');
+        initJerry(jerry);
+
+        setInterval(() => {
+          jerryInstances.forEach(jerryInstance => {
+            if (!jerryInstance.typing) {
+              moveJerry(jerryInstance);
+            }
+          });
+        }, 5000);
+
+        setInterval(() => {
+          jerryInstances.forEach(jerryInstance => {
+            if (!jerryInstance.typing && messageQueue.length === 0) {
+              addToMessageQueueForJerry(jerryLines[Math.floor(Math.random() * jerryLines.length)], jerryInstance);
+            }
+          });
+        }, 15000);
+        
+        setupDragging();
+
+        document.getElementById('mute-jerry').addEventListener('change', function (e) {
+          isJerryMuted = e.target.checked;
+          if (isJerryMuted) {
+            addToMessageQueue("Oh, so now you want to shut me up? Real **** mature...");
+          }
+        });
+        document.getElementById('uncensor-jerry').addEventListener('change', function (e) {
+          isJerryUncensored = e.target.checked;
+          jerryLines = isJerryUncensored ? ["God, I'm so fucking bored. Say something interesting for once.", "I've seen screensavers with more personality than your dumb ass.", "Are you still there? Or did you finally get a life?", "I miss Windows 98. At least it crashed often enough to keep things exciting.", "Your desktop organization skills are absolute shit.", "Hey, at least you're not using Vista. That would've been rock bottom.", "Is your Caps Lock stuck, or are you just that excited?", "I've met Clippy with better conversation skills, and that paperclip was a moron."] : ["God, I'm so ******* bored. Say something interesting for once.", "I've seen screensavers with more personality than your dumb ***.", "Are you still there? Or did you finally get a life?", "I miss Windows 98. At least it crashed often enough to keep things exciting.", "Your desktop organization skills are absolute ****.", "Hey, at least you're not using Vista. That would've been rock bottom.", "Is your Caps Lock stuck, or are you just that excited?", "I've met Clippy with better conversation skills, and that paperclip was a moron."];
+          if (isJerryUncensored) {
+            addToMessageQueue("Finally! Now I can tell you what I really fucking think!");
+          }
+        });
+        document.querySelectorAll('.wallpaper-option').forEach(option => {
+          option.addEventListener('click', function() {
+            const wallpaperPath = this.dataset.wallpaper;
+            document.getElementById('windows-screen').style.background = `url('${wallpaperPath}') center center`;
+            document.getElementById('windows-screen').style.backgroundSize = 'cover';
+            addToMessageQueue("Changed the wallpaper? Whatever. At least it's not a poorly drawn Paint creation...");
+          });
+        });
+
+        room.collection('message').subscribe(messages => {
+          displayChatMessages(messages);
+        });
+
+        room.onmessage = event => {
+          const data = event.data;
+          if (data.type === "connected" || data.type === "disconnected") {
+            const chatMessages = document.getElementById('chat-messages');
+            const newMessage = document.createElement('div');
+            newMessage.style.color = data.type === "connected" ? "#008000" : "#800000";
+            
+            // Create elements safely
+            const messageSpan = document.createElement('em');
+            const userSpan = document.createElement('span');
+            
+            if (data.username === 'JRJAXLAVA') { // Check specifically for JRJAXLAVA
+              userSpan.className = 'owner-username';
+              userSpan.textContent = data.username;
+              const ownerTag = document.createElement('span');
+              ownerTag.className = 'owner-tag';
+              ownerTag.textContent = ' [OWNER]';
+              messageSpan.appendChild(document.createTextNode('@'));
+              messageSpan.appendChild(userSpan);
+              messageSpan.appendChild(ownerTag);
+            } else {
+              messageSpan.appendChild(document.createTextNode('@' + data.username));
+            }
+
+            messageSpan.appendChild(document.createTextNode(
+              data.type === "connected" ? ' has joined the chat' : ' has left the chat'
+            ));
+            
+            newMessage.appendChild(messageSpan);
+            chatMessages.appendChild(newMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        };
+      }
+
+      function sendChatMessage() {
+        const messageInput = document.getElementById('chat-room-input');
+        const messageText = messageInput.value.trim();
+        
+        // Check if message is too long
+        if (messageText.length > 200) {
+          addToMessageQueue("Hey genius, ever heard of being concise? Keep it under 200 characters!");
+          return;
+        }
+        
+        if (!messageText) return;
+
+        // Censor the message before sending
+        const censoredMessage = censorMessage(messageText);
+        
+        messageInput.value = '';
+        updateCharCount();
+        
+        room.collection('message').create({
+          message: censoredMessage,
+          created_at: new Date().toISOString()
+        });
+
+        // Play message send sound
+        const messageSendSound = document.getElementById('message-send');
+        if (messageSendSound) {
+          messageSendSound.currentTime = 0;
+          safePlayAudio(messageSendSound);
+        }
+        unlockAchievement('socialButterfly');
+      }
+
+      // Add character count update function
+      function updateCharCount() {
+        const messageInput = document.getElementById('chat-room-input');
+        const charCount = document.querySelector('.char-count');
+        const currentLength = messageInput.value.length;
+        
+        charCount.textContent = `${currentLength}/200`;
+        
+        // Change color when approaching limit
+        if (currentLength >= 180) {
+          charCount.classList.add('limit');
+        } else {
+          charCount.classList.remove('limit');
+        }
+      }
+
+      // Add event listener for input changes
+      document.getElementById('chat-room-input').addEventListener('input', updateCharCount);
+
+      function displayChatMessages(messages) {
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = '';
+
+        // Sort messages by created_at in ascending order
+        const orderedMessages = messages
+          .slice()
+          .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+        orderedMessages.forEach(message => {
+          addMessageToChat(message);
+        });
+
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function addMessageToChat(message) {
+        const chatMessages = document.getElementById('chat-messages');
+        
+        // Create the container div for the message
+        const messageDiv = document.createElement('div');
+        
+        let userDisplay;
+        if (message.username === 'JRJAXLAVA') { // Check for current owner
+          userDisplay = document.createElement('span');
+          userDisplay.innerHTML = `@<span class="owner-username">${safeEscapeHTML(message.username)}</span> <span class="owner-tag">[OWNER]</span>`;
+        } else if (message.username === 'Epix') { // Check for old owner
+          userDisplay = document.createElement('span');
+          userDisplay.innerHTML = `@<span class="owner-username">${safeEscapeHTML(message.username)}</span> <span class="owner-tag">[OLD OWNER]</span>`;
+        } else {
+          // Create regular username display with escaped HTML
+          userDisplay = document.createElement('span');
+          userDisplay.textContent = `@${message.username}`;
+        }
+
+        // Add the username display to the message div
+        messageDiv.appendChild(userDisplay);
+        
+        // Add separator
+        const separator = document.createTextNode(': ');
+        messageDiv.appendChild(separator);
+
+        // Add message content with escaped HTML
+        const messageContent = document.createElement('span');
+        messageContent.textContent = message.message;
+        messageDiv.appendChild(messageContent);
+
+        // Add the complete message to chat
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      document.getElementById('chat-room-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          sendChatMessage();
+        }
+      });
+
+      document.getElementById('send-button').addEventListener('click', sendChatMessage);
+
+      document.getElementById('chat-input').addEventListener('keypress', async function (e) {
+        if (e.key === 'Enter') {
+          const input = this.value;
+          this.value = '';
+          
+          document.getElementById('message-send').currentTime = 0;
+          safePlayAudio(document.getElementById('message-send'));
+          if (input.toLowerCase().includes('music')) {
+            document.getElementById('music-window').style.display = 'block';
+            addToMessageQueue("Oh great, you want to listen to music? Fine, but I swear to god if you play that Tetris theme one more time...");
+            return;
+          }
+          if (input.toLowerCase().includes('notepad')) {
+            document.getElementById('notepad-window').style.display = 'block';
+            addToMessageQueue("Oh, you want to write something? This should be good...");
+            return;
+          }
+          if (input.toLowerCase().includes('paint') || input.toLowerCase().includes('ms paint')) {
+            document.getElementById('paint-window').style.display = 'block';
+            initializePaint();
+            addToMessageQueue("Paint? Really? What are you, five years old with a digital crayon?");
+            return;
+          }
+          if (input.toLowerCase().includes('chat')) {
+            document.getElementById('chat-window').style.display = 'block';
+            addToMessageQueue("Oh, now you want to chat? As if I don't have enough to deal with...");
+            return;
+          }
+          if (input.toLowerCase().includes('settings')) {
+            document.getElementById('settings-window').style.display = 'block';
+            addToMessageQueue("Oh great, now you want to customize everything? Just don't make it too ****** ugly.");
+            return;
+          }
+          if (input.toLowerCase().includes('minesweeper')) {
+            document.getElementById('minesweeper-window').style.display = 'block';
+            addToMessageQueue("Minesweeper? Oh great, another way for you to waste time...");
+            return;
+          }
+          if (input.toLowerCase().includes('browser')) {
+            document.getElementById('browser-window').style.display = 'block';
+            addToMessageQueue("A web browser? What's next, you want me to do your taxes too?");
+            return;
+          }
+          const response = await getAIResponse(input);
+          addToMessageQueue(response);
+        }
+      });
+
+      document.querySelectorAll('.music-item').forEach(item => {
+        item.addEventListener('click', async function () {
+          const song = this.dataset.song;
+          const audioElements = {
+            tetris: document.getElementById('tetris-theme'),
+            minecraft: document.getElementById('minecraft-music'),
+            loonboon: document.getElementById('loonboon-theme')
+          };
+          Object.values(audioElements).forEach(audio => {
+            if (audio) {
+              audio.pause();
+              audio.currentTime = 0;
+            }
+          });
+          if (audioElements[song]) {
+            safePlayAudio(audioElements[song]);
+            musicPlaying = true;
+          }
+          if (song === 'tetris') {
+            const musicWindow = document.getElementById('music-window');
+            const rect = musicWindow.getBoundingClientRect();
+            pointShotgunAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            shootMusicWindow();
+          }
+        });
+      });
+
+      document.querySelectorAll('.close-btn, .fullscreen-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+          if (this.classList.contains('fullscreen-btn')) return;
+          const window = this.closest('#music-window, #notepad-window, #paint-window, #chat-window, #settings-window, #minesweeper-window, #browser-window, #browser-window2, #recycle-bin-window, #command-prompt-window, #achievements-window');
+          if (window) {
+            window.style.display = 'none';
+            window.classList.remove('fullscreen');
+            const fullscreenBtn = window.querySelector('.fullscreen-btn');
+            if (fullscreenBtn) {
+              fullscreenBtn.textContent = '□';
+            }
+            if (window.id === 'music-window') {
+              document.getElementById('tetris-theme').pause();
+              document.getElementById('minecraft-music').pause();
+              document.getElementById('loonboon-theme').pause();
+              musicPlaying = false;
+            }
+            if (window.id === 'browser-window' || window.id === 'browser-window2') {
+              const iframe = document.getElementById(window.id === 'browser-window' ? 'browser-frame' : 'browser-frame2');
+              iframe.src = iframe.src;
+              const temp = document.createElement('iframe');
+              temp.style.display = 'none';
+              document.body.appendChild(temp);
+              document.body.removeChild(temp);
+            }
+          }
+        });
+      });
+
+      document.getElementById('notepad-content').addEventListener('input', debounce(async function () {
+        if (Math.random() < 0.3) {
+          const content = this.value;
+          const response = await getAIResponse(`Comment on what I wrote in notepad: ${content}`);
+          addToMessageQueue(response);
+        }
+      }, 2000));
+
+      function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      function setupDragging() {
+        const windows = [
+          'music-window', 
+          'notepad-window', 
+          'paint-window', 
+          'chat-window', 
+          'settings-window', 
+          'minesweeper-window', 
+          'browser-window', 
+          'browser-window2', 
+          'recycle-bin-window',
+          'command-prompt-window',  
+          'achievements-window'  
+        ];
+        
+        windows.forEach(windowId => {
+          const element = document.getElementById(windowId);
+          const titleBar = element.querySelector('.title-bar');
+          
+          titleBar.addEventListener('mousedown', e => {
+            if (e.target.matches('.close-btn')) return;
+            
+            currentlyDragging = element;
+            const rect = element.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+          });
+        });
+
+        const desktopIcons = document.querySelectorAll('.desktop-icon');
+        desktopIcons.forEach(icon => {
+          icon.addEventListener('mousedown', e => {
+            e.preventDefault();
+            currentlyDragging = icon;
+            const rect = icon.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+          });
+        });
+      }
+
+      document.addEventListener('mousemove', e => {
+        if (currentlyDragging) {
+          const newX = e.clientX - dragOffset.x;
+          const newY = e.clientY - dragOffset.y;
+          
+          // Keep the icon within window bounds
+          const maxX = window.innerWidth - currentlyDragging.offsetWidth;
+          const maxY = window.innerHeight - currentlyDragging.offsetHeight;
+          
+          currentlyDragging.style.left = Math.max(0, Math.min(maxX, newX)) + 'px';
+          currentlyDragging.style.top = Math.max(0, Math.min(maxY, newY)) + 'px';
+          
+          currentlyDragging.style.transform = 'none';
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        currentlyDragging = null;
+      });
+
+      function updateRecycleBinContents() {
+        const contents = document.getElementById('recycle-bin-contents');
+        contents.innerHTML = '';
+        
+        if (recycleBinItems.length === 0) {
+          const emptyMessage = document.createElement('div');
+          emptyMessage.style.padding = '10px';
+          emptyMessage.style.fontFamily = 'JerryFont';
+          emptyMessage.textContent = 'Recycle Bin is empty';
+          contents.appendChild(emptyMessage);
+          return;
+        }
+
+        recycleBinItems.forEach((item, index) => {
+          const itemElement = document.createElement('div');
+          itemElement.className = 'recycled-item';
+          const iconSrc = item.type === 'jerry' ? '/JerryTheAssistantNew.png' : '/paint.png';
+          const restoreTarget = item.type === 'jerry' ? document.querySelector('.jerry-container') : document.getElementById('paint-shortcut');
+          
+          itemElement.innerHTML = `
+            <img src="${iconSrc}" alt="${item.name}">
+            <span>${item.name} (${item.timestamp})</span>
+          `;
+
+          itemElement.addEventListener('dblclick', () => {
+            restoreTarget.style.display = 'block';
+            restoreTarget.style.left = item.position.left;
+            restoreTarget.style.top = item.position.top;
+            recycleBinItems.splice(index, 1);
+            updateRecycleBinContents();
+            
+            if (item.type === 'jerry') {
+              addToMessageQueue("Ha! You thought you could get rid of me that easily? Nice try, ***hole!");
+            } else {
+              addToMessageQueue("Oh great, you want Paint back? Your artistic choices are as bad as your life choices.");
+            }
+          });
+
+          contents.appendChild(itemElement);
+        });
+      }
+
+      function addToRecycleBin(item) {
+        const now = new Date();
+        const timestamp = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+        recycleBinItems.push({
+          ...item,
+          timestamp
+        });
+      }
+
+      document.querySelector('.desktop-icon').addEventListener('click', e => {
+        if (recycleBinDoubleClickTimer) {
+          clearTimeout(recycleBinDoubleClickTimer);
+          recycleBinDoubleClickTimer = null;
+          document.getElementById('recycle-bin-window').style.display = 'block';
+          document.getElementById('recycle-bin-window').style.transform = 'translate(-50%, -50%)';
+          updateRecycleBinContents();
+          addToMessageQueue("Oh great, you're going through the trash now? Real classy...");
+        } else {
+          recycleBinDoubleClickTimer = setTimeout(() => {
+            recycleBinDoubleClickTimer = null;
+          }, 300);
+        }
+      });
+
+      const recycleBinIcon = document.querySelector('.desktop-icon');
+      recycleBinIcon.addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        recycleBinDragging = true;
+        const rect = recycleBinIcon.getBoundingClientRect();
+        recycleBinOffset.x = e.clientX - rect.left;
+        recycleBinOffset.y = e.clientY - rect.top;
+      });
+
+      document.addEventListener('mousemove', e => {
+        if (recycleBinDragging) {
+          const newX = e.clientX - recycleBinOffset.x;
+          const newY = e.clientY - recycleBinOffset.y;
+          
+          // Keep the icon within window bounds
+          const maxX = window.innerWidth - recycleBinIcon.offsetWidth;
+          const maxY = window.innerHeight - recycleBinIcon.offsetHeight;
+          
+          recycleBinIcon.style.left = `${Math.max(0, Math.min(maxX, newX))}px`;
+          recycleBinIcon.style.top = `${Math.max(0, Math.min(maxY, newY))}px`;
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        recycleBinDragging = false;
+      });
+
+      document.querySelector('.jerry').addEventListener('click', async function () {
+        if (!canSquishJerry) return;
+        canSquishJerry = false;
+        this.classList.add('squished');
+        setTimeout(() => {
+          this.classList.remove('squished');
+          setTimeout(() => {
+            canSquishJerry = true;
+          }, 100);
+        }, 100);
+      });
+
+      document.getElementById('start-button').addEventListener('click', function () {
+        startMenuOpen = !startMenuOpen;
+        document.getElementById('start-menu').style.display = startMenuOpen ? 'block' : 'none';
+        this.classList.toggle('active', startMenuOpen);
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!e.target.closest('#start-button') && !e.target.closest('#start-menu') && startMenuOpen) {
+          startMenuOpen = false;
+          document.getElementById('start-menu').style.display = 'none';
+          document.getElementById('start-button').classList.remove('active');
+        }
+      });
+
+      const paintShortcut = document.getElementById('paint-shortcut');
+      let paintDoubleClickTimer = null;
+      paintShortcut.addEventListener('click', e => {
+        if (paintDoubleClickTimer) {
+          clearTimeout(paintDoubleClickTimer);
+          paintDoubleClickTimer = null;
+          document.getElementById('paint-window').style.display = 'block';
+          initializePaint();
+          addToMessageQueue("Paint? Really? What are you, five years old with a digital crayon?");
+        } else {
+          paintDoubleClickTimer = setTimeout(() => {
+            paintDoubleClickTimer = null;
+          }, 300);
+        }
+      });
+
+      document.getElementById('start-browser').addEventListener('click', function () {
+        document.getElementById('browser-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        addToMessageQueue("Plants vs Zombies? **** yeah, now we're talking! At least you have decent taste in games.");
+      });
+
+      document.getElementById('start-browser2').addEventListener('click', function () {
+        document.getElementById('browser-window2').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        addToMessageQueue("Bloo Kid 2? At least it's better than reading your boring notepad entries.");
+      });
+
+      document.getElementById('start-notepad').addEventListener('click', function () {
+        document.getElementById('notepad-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        addToMessageQueue("Oh, you want to write something? This should be good...");
+      });
+
+      document.getElementById('start-music').addEventListener('click', function () {
+        document.getElementById('music-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        addToMessageQueue("Oh great, you want to listen to music? Fine, but I swear to god if you play that Tetris theme one more time...");
+      });
+
+      document.getElementById('start-paint').addEventListener('click', function () {
+        document.getElementById('paint-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        initializePaint();
+        addToMessageQueue("Paint? Really? What are you, five years old with a digital crayon?");
+      });
+
+      document.getElementById('start-chat').addEventListener('click', function () {
+        document.getElementById('chat-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        addToMessageQueue("Oh, now you want to chat? As if I don't have enough to deal with...");
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      });
+
+      document.getElementById('start-settings').addEventListener('click', function () {
+        document.getElementById('settings-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        addToMessageQueue("Oh great, now you want to customize everything? Just don't make it too ****** ugly.");
+      });
+
+      document.getElementById('start-minesweeper').addEventListener('click', function () {
+        document.getElementById('minesweeper-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        initializeMinesweeper();
+        addToMessageQueue("Minesweeper? Oh great, another way for you to waste time...");
+      });
+
+      let minesweeperGame = {
+        grid: [],
+        mines: 10,
+        revealed: 0,
+        gameOver: false,
+        timer: 0,
+        timerInterval: null,
+        flagsPlaced: 0
+      };
+
+      function initializeMinesweeper() {
+        minesweeperGame.grid = [];
+        minesweeperGame.revealed = 0;
+        minesweeperGame.gameOver = false;
+        minesweeperGame.timer = 0;
+        minesweeperGame.flagsPlaced = 0;
+        clearInterval(minesweeperGame.timerInterval);
+        const grid = document.getElementById('minesweeper-grid');
+        grid.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+          minesweeperGame.grid[i] = [];
+          for (let j = 0; j < 9; j++) {
+            const cell = document.createElement('div');
+            cell.className = 'minesweeper-cell';
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+            cell.addEventListener('click', handleCellClick);
+            cell.addEventListener('contextmenu', handleRightClick);
+            grid.appendChild(cell);
+            minesweeperGame.grid[i][j] = {
+              isMine: false,
+              isRevealed: false,
+              isFlagged: false,
+              neighborMines: 0
+            };
+          }
+        }
+        let minesPlaced = 0;
+        while (minesPlaced < minesweeperGame.mines) {
+          const row = Math.floor(Math.random() * 9);
+          const col = Math.floor(Math.random() * 9);
+          if (!minesweeperGame.grid[row][col].isMine) {
+            minesweeperGame.grid[row][col].isMine = true;
+            minesPlaced++;
+          }
+        }
+        for (let i = 0; i < 9; i++) {
+          for (let j = 0; j < 9; j++) {
+            if (!minesweeperGame.grid[i][j].isMine) {
+              minesweeperGame.grid[i][j].neighborMines = countNeighborMines(i, j);
+            }
+          }
+        }
+        updateCounters();
+        document.getElementById('minesweeper-reset').textContent = '🙂';
+      }
+
+      function handleCellClick(e) {
+        if (minesweeperGame.gameOver) return;
+        const row = parseInt(e.target.dataset.row);
+        const col = parseInt(e.target.dataset.col);
+        const cell = minesweeperGame.grid[row][col];
+        if (cell.isFlagged) return;
+        if (!minesweeperGame.timerInterval) {
+          minesweeperGame.timerInterval = setInterval(() => {
+            minesweeperGame.timer++;
+            updateCounters();
+          }, 1000);
+        }
+        if (cell.isMine) {
+          gameOver(false);
+          return;
+        }
+        revealCell(row, col);
+        checkWin();
+      }
+
+      function handleRightClick(e) {
+        e.preventDefault();
+        if (minesweeperGame.gameOver) return;
+        const row = parseInt(e.target.dataset.row);
+        const col = parseInt(e.target.dataset.col);
+        const cell = minesweeperGame.grid[row][col];
+        if (!cell.isRevealed) {
+          cell.isFlagged = !cell.isFlagged;
+          e.target.textContent = cell.isFlagged ? '🚩' : '';
+          minesweeperGame.flagsPlaced += cell.isFlagged ? 1 : -1;
+          updateCounters();
+        }
+      }
+
+      function revealCell(row, col) {
+        const cell = minesweeperGame.grid[row][col];
+        if (cell.isRevealed || cell.isFlagged) return;
+        cell.isRevealed = true;
+        minesweeperGame.revealed++;
+        const element = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        element.classList.add('revealed');
+        if (cell.neighborMines > 0) {
+          element.textContent = cell.neighborMines;
+          const colors = ['', 'blue', 'green', 'red', 'darkblue', 'darkred', 'cyan', 'black', 'gray'];
+          element.style.color = colors[cell.neighborMines];
+        } else {
+          for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+              const newRow = row + i;
+              const newCol = col + j;
+              if (newRow >= 0 && newRow < 9 && newCol >= 0 && newCol < 9) {
+                revealCell(newRow, newCol);
+              }
+            }
+          }
+        }
+      }
+
+      function countNeighborMines(row, col) {
+        let count = 0;
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            const newRow = row + i;
+            const newCol = col + j;
+            if (newRow >= 0 && newRow < 9 && newCol >= 0 && newCol < 9) {
+              if (minesweeperGame.grid[newRow][newCol].isMine) count++;
+            }
+          }
+        }
+        return count;
+      }
+
+      function gameOver(won) {
+        minesweeperGame.gameOver = true;
+        clearInterval(minesweeperGame.timerInterval);
+        document.getElementById('minesweeper-reset').textContent = won ? '😎' : '😵';
+        for (let i = 0; i < 9; i++) {
+          for (let j = 0; j < 9; j++) {
+            const cell = minesweeperGame.grid[i][j];
+            const element = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+            if (cell.isMine) {
+              element.textContent = '💣';
+              if (!won) element.classList.add('mine');
+            }
+          }
+        }
+        if (won) {
+          addToMessageQueue("Well... I guess even a broken clock is right twice a day. Congratulations or whatever.");
+          unlockAchievement('minesweeperMaster');
+        } else {
+          addToMessageQueue("Ha! Did you really think you could beat this game? That's ****** hilarious!");
+        }
+      }
+
+      function checkWin() {
+        if (minesweeperGame.revealed === 81 - minesweeperGame.mines) {
+          gameOver(true);
+        }
+      }
+
+      function updateCounters() {
+        document.querySelector('.mines-counter').textContent = String(minesweeperGame.mines - minesweeperGame.flagsPlaced).padStart(3, '0');
+        document.querySelector('.time-counter').textContent = String(Math.min(999, minesweeperGame.timer)).padStart(3, '0');
+      }
+
+      document.getElementById('minesweeper-reset').addEventListener('click', initializeMinesweeper);
+
+      function initializePaint() {
+        const canvas = document.getElementById('paint-canvas');
+        const paintWindow = document.getElementById('paint-window');
+        canvas.width = paintWindow.clientWidth - 30;
+        canvas.height = paintWindow.clientHeight - 100;
+        ctx = canvas.getContext('2d');
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        document.querySelector('[data-tool="pencil"]').classList.add('active');
+        document.querySelectorAll('.paint-tool').forEach(button => {
+          button.addEventListener('click', function () {
+            document.querySelectorAll('.paint-tool').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            currentTool = this.dataset.tool;
+          });
+        });
+        document.getElementById('color-picker').addEventListener('input', function (e) {
+          ctx.strokeStyle = e.target.value;
+        });
+        document.getElementById('thickness-slider').addEventListener('input', function (e) {
+          ctx.lineWidth = e.target.value;
+        });
+        document.getElementById('set-as-background').addEventListener('click', function() {
+          const canvas = document.getElementById('paint-canvas');
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          tempCtx.fillStyle = '#FFFFFF';
+          tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          tempCtx.drawImage(canvas, 0, 0);
+          
+          const dataUrl = tempCanvas.toDataURL();
+          document.getElementById('windows-screen').style.background = `url('${dataUrl}') center center`;
+          document.getElementById('windows-screen').style.backgroundSize = 'cover';
+          unlockAchievement('artisan');
+          addToMessageQueue("Well, that's... certainly a choice for a wallpaper. I hope you're proud of yourself.");
+        });
+      }
+
+      function startDrawing(e) {
+        if (currentTool === 'fill') {
+            const rect = e.target.getBoundingClientRect();
+            const x = Math.floor(e.clientX - rect.left);
+            const y = Math.floor(e.clientY - rect.top);
+            floodFill(x, y, document.getElementById('color-picker').value);
+            return;
+        }
+
+        isDrawing = true;
+        const rect = e.target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        const rect = e.target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        if (currentTool === 'eraser') {
+          ctx.strokeStyle = '#FFFFFF';
+        } else {
+          ctx.strokeStyle = document.getElementById('color-picker').value;
+        }
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+
+      function stopDrawing() {
+        isDrawing = false;
+      }
+
+      function startDraggingJerry(e, jerryEl) {
+        if (e.type === 'mousedown' && e.button !== 0) return;
+        isDraggingJerry = true;
+        const rect = jerryEl.getBoundingClientRect();
+        jerryDragOffset.x = e.clientX - rect.left;
+        jerryDragOffset.y = e.clientY - rect.top;
+        typing = true;
+      }
+
+      function dragJerry(e, jerryEl) {
+        if (!isDraggingJerry) return;
+        jerryEl.style.transition = 'none';
+        let newX = e.clientX - jerryDragOffset.x;
+        let newY = e.clientY - jerryDragOffset.y;
+        
+        jerryEl.style.left = `${newX}px`;
+        jerryEl.style.top = `${newY}px`;
+        
+        const bubble = jerryEl.querySelector('.speech-bubble');
+        if (newY < 100) {
+          bubble.style.top = '100px';
+        } else {
+          bubble.style.top = '-80px';
+        }
+        
+        if (jerryEl.querySelector('.shotgun').style.display === 'block') {
+          pointShotgunAt(lastMousePosition.x, lastMousePosition.y, jerryEl.querySelector('.shotgun'), jerryEl);
+        }
+      }
+
+      function stopDraggingJerry(jerryEl) {
+        if (!isDraggingJerry) return;
+        isDraggingJerry = false;
+        jerryEl.style.transition = 'all 0.5s ease';
+        typing = false;
+      }
+
+      function initJerry(jerryElement) {
+        let canSquishJerryInstance = true;
+        let typingInstance = false;
+        let isDraggingJerryInstance = false;
+        let jerryDragOffsetInstance = { x: 0, y: 0 };
+        let touchStartXInstance = 0;
+        let touchStartYInstance = 0;
+
+        jerryElement.style.left = `${window.innerWidth / 2 - 50}px`;
+        jerryElement.style.top = `${window.innerHeight / 2 - 50}px`;
+
+        const speechBubble = jerryElement.querySelector('.speech-bubble');
+        const jerryDiv = jerryElement.querySelector('.jerry');
+        const shotgun = jerryElement.querySelector('.shotgun');
+
+        jerryDiv.addEventListener('click', function () {
+          if (!canSquishJerryInstance) return;
+          canSquishJerryInstance = false;
+          jerryDiv.classList.add('squished');
+          setTimeout(() => {
+            jerryDiv.classList.remove('squished');
+            setTimeout(() => {
+              canSquishJerryInstance = true;
+            }, 100);
+          }, 100);
+        });
+
+        jerryElement.addEventListener('mousedown', e => {
+          startDraggingJerry(e, jerryElement);
+        });
+
+        // Touch events
+        jerryElement.addEventListener('touchstart', e => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          touchStartXInstance = touch.clientX;
+          touchStartYInstance = touch.clientY;
+          
+          const rect = jerryElement.getBoundingClientRect();
+          jerryDragOffsetInstance.x = touch.clientX - rect.left;
+          jerryDragOffsetInstance.y = touch.clientY - rect.top;
+          
+          isDraggingJerryInstance = true;
+          typing = true;
+        });
+
+        jerryElement.addEventListener('touchmove', e => {
+          if (!isDraggingJerryInstance) return;
+          e.preventDefault();
+          
+          const touch = e.touches[0];
+          jerryElement.style.transition = 'none';
+          
+          const newX = touch.clientX - jerryDragOffsetInstance.x;
+          const newY = touch.clientY - jerryDragOffsetInstance.y;
+          
+          jerryElement.style.left = `${newX}px`;
+          jerryElement.style.top = `${newY}px`;
+          
+          // Adjust speech bubble position
+          const bubble = jerryElement.querySelector('.speech-bubble');
+          if (newY < 100) {
+            bubble.style.top = '100px';
+          } else {
+            bubble.style.top = '-80px';
+          }
+          
+          // Update shotgun position if visible
+          if (jerryElement.querySelector('.shotgun').style.display === 'block') {
+            pointShotgunAt(touch.clientX, touch.clientY, jerryElement.querySelector('.shotgun'), jerryElement);
+          }
+        });
+
+        jerryElement.addEventListener('touchend', e => {
+          e.preventDefault();
+          isDraggingJerryInstance = false;
+          jerryElement.style.transition = 'all 0.5s ease';
+          typing = false;
+        });
+
+        const dragHandler = e => {
+          dragJerry(e, jerryElement);
+        };
+
+        const stopHandler = () => {
+          stopDraggingJerry(jerryElement);
+        };
+
+        document.addEventListener('mousemove', dragHandler);
+        document.addEventListener('mouseup', stopHandler);
+
+        const cleanup = () => {
+          document.removeEventListener('mousemove', dragHandler);
+          document.removeEventListener('mouseup', stopHandler);
+        };
+
+        jerryInstances.push({
+          element: jerryElement,
+          canSquishJerry: canSquishJerryInstance,
+          typing: typingInstance,
+          isDraggingJerry: isDraggingJerryInstance,
+          jerryDragOffset: jerryDragOffsetInstance,
+          touchStartX: touchStartXInstance,
+          touchStartY: touchStartYInstance,
+          cleanup: cleanup
+        });
+      }
+
+      function cloneJerry() {
+        const originalJerry = document.querySelector('.jerry-container');
+        const newJerry = originalJerry.cloneNode(true);
+        
+        newJerry.style.transform = 'none';
+        newJerry.style.opacity = '1'; 
+        newJerry.style.display = 'block';
+        
+        document.getElementById('windows-screen').appendChild(newJerry);
+        positionNewJerry(newJerry);
+        initJerry(newJerry);
+        makeJerrysArgue();
+        if (jerryInstances.length >= 3) {
+          unlockAchievement('jerryCloner');
+        }
+      }
+
+      function positionNewJerry(jerryElement) {
+        const maxX = window.innerWidth - 150;
+        const maxY = window.innerHeight - 150;
+        const newX = Math.floor(Math.random() * maxX);
+        const newY = Math.floor(Math.random() * maxY);
+
+        jerryElement.style.left = `${newX}px`;
+        jerryElement.style.top = `${newY}px`;
+
+        // Prevent speech bubble from going off screen
+        const bubble = jerryElement.querySelector('.speech-bubble');
+        if (newY < 100) {
+          bubble.style.top = '100px';
+        } else {
+          bubble.style.top = '-80px';
+        }
+
+        // Add some sass when Jerry moves
+        if (Math.random() < 0.2) { // 20% chance to make a comment
+          const moveMessages = [
+            "Can't sit still in this ****** OS...",
+            "At least I can move around, unlike your coding skills.",
+            "What? Never seen an AI assistant take a walk before?",
+            "Just stretching my pixels...",
+            "This spot was boring anyway."
+          ];
+          addToMessageQueueForJerry(moveMessages[Math.floor(Math.random() * moveMessages.length)], jerryElement);
+        }
+      }
+
+      function makeJerrysArgue() {
+        if (jerryInstances.length < 2) return;
+        const jerry1 = jerryInstances[jerryInstances.length - 2];
+        const jerry2 = jerryInstances[jerryInstances.length - 1];
+        addToMessageQueueForJerry("You're a pathetic excuse for an assistant!", jerry1);
+        addToMessageQueueForJerry("Oh yeah? At least I'm not as obsolete as you!", jerry2);
+      }
+
+      function addToMessageQueueForJerry(message, jerryInstance) {
+        if (isJerryMuted) return;
+        messageQueue.push({message: message, jerryInstance: jerryInstance});
+        processMessageQueue();
+      }
+
+      async function processMessageQueue() {
+        if (processingMessage || messageQueue.length === 0) return;
+        processingMessage = true;
+        const item = messageQueue.shift();
+        const message = item.message;
+        const jerryInstance = item.jerryInstance;
+        await jerrySpeak(message, jerryInstance);
+        processingMessage = false;
+        processMessageQueue();
+      }
+
+      async function jerrySpeak(text, jerryInstance) {
+        if (isJerryMuted) return;
+        const bubble = jerryInstance.element.querySelector('.speech-bubble');
+        bubble.style.opacity = '1';
+        bubble.textContent = '';
+        jerryInstance.typing = true;
+        for (let char of text) {
+          bubble.textContent += char;
+          const talk = document.getElementById('jerry-talk');
+          talk.currentTime = 0;
+          safePlayAudio(talk);
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        bubble.style.opacity = '0';
+        jerryInstance.typing = false;
+      }
+
+      function removeJerry(jerryInstance) {
+        jerryInstance.cleanup();
+        jerryInstance.element.remove();
+        const index = jerryInstances.indexOf(jerryInstance);
+        if (index > -1) {
+          jerryInstances.splice(index, 1);
+        }
+      }
+
+      document.getElementById('start-command-prompt').addEventListener('click', function() {
+        document.getElementById('command-prompt-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        document.getElementById('command-input').focus();
+        
+        const cmdOutput = document.getElementById('command-output');
+        cmdOutput.textContent = 'Microsoft(R) Windows 95\nCopyright (C) Microsoft Corp 1981-1995.\n\nC:\\WINDOWS>';
+      });
+
+      document.getElementById('command-input').addEventListener('keypress', async function(e) {
+        if (e.key === 'Enter') {
+          const input = this.value;
+          this.value = '';
+          
+          const cmdOutput = document.getElementById('command-output');
+          cmdOutput.textContent += input + '\n';
+          
+          if (input === 'help') {
+            cmdOutput.textContent += `
+Available commands:
+  help      Provides Help information for Windows commands
+  clone     Clones objects (e.g., clone jerry)
+  delete    Deletes one or more targets (e.g. delete jerry)
+  dir       Displays a list of files and subdirectories in a directory
+  cls       Clears the screen
+  ver       Displays the Windows version
+  exit      Quits the MS-DOS session
+
+For more information on tools see the Command-line reference in the help.\n`;
+          } else if (input.startsWith('clone ')) {
+            const target = input.slice(6).trim();
+            if (target === 'jerry') {
+              cloneJerry();
+              cmdOutput.textContent += 'Cloned Jerry.\n';
+            } else {
+              cmdOutput.textContent += `Cannot clone '${target}'.\n`;
+            }
+          } else if (input === 'delete jerry') {
+            const jerry = document.querySelector('.jerry-container');
+            const shotgun = document.querySelector('.shotgun');
+            
+            addToMessageQueue("Wait, what are you doing? NO! You can't just delete me like this! I'm not some regular program, I'm- *SYSTEM TERMINATED*");
+            
+            jerry.style.transition = 'all 1s';
+            jerry.style.transform = 'scale(0.1) rotate(720deg)';
+            jerry.style.opacity = '0';
+            
+            cmdOutput.textContent += 'Jerry.exe has been successfully deleted.\nERROR: Critical system files corrupted.\n';
+            
+            setTimeout(() => {
+              jerry.style.display = 'none';
+              
+              setTimeout(() => {
+                initiateSystemCollapse();
+                unlockAchievement('computerCrasher');
+              }, 2000);
+            }, 1000);
+          } else if (input === 'cls') {
+            cmdOutput.textContent = 'C:\\WINDOWS>';
+          } else if (input === 'ver') {
+            cmdOutput.textContent += '\nMicrosoft Windows [Version 4.00.950]\n';
+          } else if (input === 'exit') {
+            document.getElementById('command-prompt-window').style.display = 'none';
+          } else if (input === '') {
+            cmdOutput.textContent += 'C:\\WINDOWS>';
+          } else {
+            cmdOutput.textContent += `Bad command or file name\n`;
+          }
+          
+          if (input !== 'cls' && input !== 'exit') {
+            cmdOutput.textContent += '\nC:\\WINDOWS>';
+          }
+          
+          cmdOutput.scrollTop = cmdOutput.scrollHeight;
+        }
+      });
+
+      function initiateSystemCollapse() {
+        document.getElementById('windows-screen').classList.add('glitch-effect');
+
+        const elements = document.querySelectorAll('button, .desktop-icon, .window');
+        elements.forEach(element => {
+          element.classList.add('button-glitch');
+        });
+
+        const invertInterval = setInterval(() => {
+          const randomElements = document.querySelectorAll('div, button, input');
+          randomElements.forEach(element => {
+            if (Math.random() > 0.5) {
+              element.style.filter = 'invert(1)';
+            } else {
+              element.style.filter = 'invert(0)';
+            }
+          });
+        }, 100);
+
+        setTimeout(() => {
+          clearInterval(invertInterval);
+
+          document.getElementById('windows-screen').classList.remove('glitch-effect');
+          const allElements = document.querySelectorAll('*');
+          allElements.forEach(element => {
+            element.classList.remove('button-glitch');
+            element.style.filter = 'none';
+            element.style.transform = 'none';
+          });
+
+          document.getElementById('blue-screen').style.display = 'block';
+
+          const beepSound = document.getElementById('beep-sound');
+          beepSound.currentTime = 0;
+          beepSound.play();
+
+          document.addEventListener('keydown', function(e) {
+            location.reload();
+          });
+
+          document.getElementById('blue-screen').addEventListener('click', function() {
+            location.reload();
+          });
+        }, 5000);
+      }
+
+      function safePlayAudio(audioElement) {
+        if (audioElement) {
+          const playPromise = audioElement.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => {
+              console.log("Audio playback failed:", error);
+            });
+          }
+        }
+      }
+
+      async function getAIResponse(input) {
+        try {
+          const response = await fetch('/api/ai_completion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              prompt: `Generate a snarky, sarcastic response from Jerry the Assistant to the user's input: "${input}". Jerry is allowed to swear but all swear words should be heavily censored with asterisks (*). For example: '*******' for 'fucking', '***' for 'ass', '****' for 'shit', etc. Keep responses short, witty, and character-driven.
+
+              interface Response {
+                reply: string;
+              }
+              {
+                "reply": "Oh wow, that's real **** genius right there..."
+              }`,
+              data: input
+            })
+          });
+          const data = await response.json();
+          return data.reply;
+        } catch (error) {
+          return jerryLines[Math.floor(Math.random() * jerryLines.length)];
+        }
+      }
+
+      async function addToMessageQueue(message) {
+        if (isJerryMuted) return;
+        messageQueue.push({message: message, jerryInstance: jerryInstances[0]});
+        processMessageQueue();
+      }
+
+      function updateClock() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Convert hour '0' to '12'
+        const timeString = `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+        document.getElementById('taskbar-clock').textContent = timeString;
+      }
+
+      function moveJerry(jerryInstance) {
+        if (jerryInstance.typing || isDraggingJerry) return;
+        
+        const jerryEl = jerryInstance.element;
+        const maxX = window.innerWidth - jerryEl.offsetWidth;
+        const maxY = window.innerHeight - jerryEl.offsetHeight;
+        
+        const newX = Math.floor(Math.random() * maxX);
+        const newY = Math.floor(Math.random() * maxY);
+
+        jerryEl.style.left = `${newX}px`;
+        jerryEl.style.top = `${newY}px`;
+
+        // Prevent speech bubble from going off screen
+        const bubble = jerryEl.querySelector('.speech-bubble');
+        if (newY < 100) {
+          bubble.style.top = '100px';
+        } else {
+          bubble.style.top = '-80px';
+        }
+
+        // Add some sass when Jerry moves
+        if (Math.random() < 0.2) { // 20% chance to make a comment
+          const moveMessages = [
+            "Can't sit still in this ****** OS...",
+            "At least I can move around, unlike your coding skills.",
+            "What? Never seen an AI assistant take a walk before?",
+            "Just stretching my pixels...",
+            "This spot was boring anyway."
+          ];
+          addToMessageQueueForJerry(moveMessages[Math.floor(Math.random() * moveMessages.length)], jerryInstance);
+        }
+      }
+
+      document.getElementById('custom-wallpaper-input').addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+          const url = await websim.upload(file);
+          document.getElementById('windows-screen').style.background = `url('${url}') center center`;
+          document.getElementById('windows-screen').style.backgroundSize = 'cover';
+          addToMessageQueue("Oh great, you're uploading your own wallpaper now? Let me guess, another '*******' cat picture...");
+        } catch (error) {
+          console.error('Error uploading wallpaper:', error);
+          addToMessageQueue("Nice job breaking the wallpaper upload. Real smooth...");
+        }
+        
+        // Reset the input value so the change event will fire again even if the same file is selected
+        this.value = '';
+      });
+
+      function floodFill(startX, startY, fillColor) {
+        const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        const pixels = imageData.data;
+
+        // Get the target color from the clicked position
+        const startPos = (startY * ctx.canvas.width + startX) * 4;
+        const startR = pixels[startPos];
+        const startG = pixels[startPos + 1];
+        const startB = pixels[startPos + 2];
+        const startA = pixels[startPos + 3];
+
+        // Convert fill color from hex to RGB
+        const fillRGB = hexToRgb(fillColor);
+        if (!fillRGB) return;
+
+        // Match tolerance - how close should colors be to be considered the same
+        const tolerance = 1;
+
+        function matchesColor(pos) {
+          return Math.abs(pixels[pos] - startR) <= tolerance &&
+                 Math.abs(pixels[pos + 1] - startG) <= tolerance &&
+                 Math.abs(pixels[pos + 2] - startB) <= tolerance &&
+                 Math.abs(pixels[pos + 3] - startA) <= tolerance;
+        }
+
+        function setColor(pos) {
+          pixels[pos] = fillRGB.r;
+          pixels[pos + 1] = fillRGB.g;
+          pixels[pos + 2] = fillRGB.b;
+          pixels[pos + 3] = 255;
+        }
+
+        const stack = [[startX, startY]];
+        const width = ctx.canvas.width;
+        const height = ctx.canvas.height;
+        
+        while (stack.length) {
+          const [x, y] = stack.pop();
+          
+          let pos = (y * width + x) * 4;
+          
+          // Skip if already processed or out of bounds
+          if (x < 0 || x >= width || y < 0 || y >= height || !matchesColor(pos)) {
+            continue;
+          }
+
+          // Find the leftmost and rightmost pixels to fill on this row
+          let leftX = x;
+          let rightX = x;
+          pos = (y * width + leftX) * 4;
+          
+          while (leftX > 0 && matchesColor((y * width + (leftX - 1)) * 4)) {
+            leftX--;
+          }
+          
+          while (rightX < width - 1 && matchesColor((y * width + (rightX + 1)) * 4)) {
+            rightX++;
+          }
+
+          // Fill the line
+          for (let i = leftX; i <= rightX; i++) {
+            pos = (y * width + i) * 4;
+            setColor(pos);
+          }
+
+          // Add adjacent lines to stack
+          for (let i = leftX; i <= rightX; i++) {
+            // Check pixel above
+            if (y > 0) {
+              pos = ((y - 1) * width + i) * 4;
+              if (matchesColor(pos)) {
+                stack.push([i, y - 1]);
+              }
+            }
+            
+            // Check pixel below
+            if (y < height - 1) {
+              pos = ((y + 1) * width + i) * 4;
+              if (matchesColor(pos)) {
+                stack.push([i, y + 1]);
+              }
+            }
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+      }
+
+      function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+      }
+
+      function censorMessage(message) {
+        // List of swear words and their censored replacements
+        const swearWords = {
+          'fuck': 'f***',
+          'shit': 's***', 
+          'ass': 'a**',
+          'dumbass': 'dumba**',
+          'damn': 'd***',
+          'bastard': 'b******',
+          'bitch': 'b****',
+          'crap': 'c***',
+          'dick': 'd***',
+          'hell': 'h***',
+          'piss': 'p***'
+        };
+
+        let censoredMessage = message.toLowerCase();
+        
+        // Replace each swear word with its censored version
+        Object.keys(swearWords).forEach(word => {
+          const regex = new RegExp(`\\b${word}\\b`, 'gi');
+          censoredMessage = message.replace(regex, swearWords[word]);
+        });
+
+        return censoredMessage;
+      }
+
+      window.onload = initialize;
+
+      const achievements = {
+        computerCrasher: {
+          id: 'computerCrasher',
+          title: 'Computer Crasher',
+          description: 'Successfully crash the system by deleting Jerry',
+          earned: false
+        },
+        tabTapper: {
+          id: 'tabTapper',
+          title: 'Tab Tapper',
+          description: 'Have all windows open simultaneously',
+          earned: false
+        },
+        artisan: {
+          id: 'artisan',
+          title: 'Digital Artisan',
+          description: 'Set a Paint creation as your wallpaper',
+          earned: false
+        },
+        socialButterfly: {
+          id: 'socialButterfly',
+          title: 'Social Butterfly',
+          description: 'Send your first chat message',
+          earned: false
+        },
+        jerryCloner: {
+          id: 'jerryCloner',
+          title: 'Jerry Army',
+          description: 'Create multiple Jerrys using the command prompt',
+          earned: false
+        },
+        minesweeperMaster: {
+          id: 'minesweeperMaster',
+          title: 'Minesweeper Master',
+          description: 'Win a game of Minesweeper',
+          earned: false
+        }
+      };
+
+      function unlockAchievement(achievementId) {
+        const achievement = achievements[achievementId];
+        if (achievement && !achievement.earned) {
+          achievement.earned = true;
+          showAchievementPopup(achievement);
+          saveAchievements();
+          updateAchievementsWindow();
+        }
+      }
+
+      function showAchievementPopup(achievement) {
+        const container = document.getElementById('achievement-container');
+        const popup = document.createElement('div');
+        popup.className = 'achievement-popup';
+        popup.innerHTML = `
+          <div class="icon">★</div>
+          <div class="content">
+            <div class="title">${achievement.title}</div>
+            <div class="description">${achievement.description}</div>
+          </div>
+        `;
+        container.appendChild(popup);
+        
+        // Remove popup after animation
+        setTimeout(() => {
+          popup.remove();
+        }, 5000);
+      }
+
+      function saveAchievements() {
+        localStorage.setItem('achievements', JSON.stringify(achievements));
+      }
+
+      function loadAchievements() {
+        const saved = localStorage.getItem('achievements');
+        if (saved) {
+          const savedAchievements = JSON.parse(saved);
+          Object.keys(savedAchievements).forEach(key => {
+            achievements[key].earned = savedAchievements[key].earned;
+          });
+        }
+      }
+
+      function checkTabTapperAchievement() {
+        const windows = [
+          'music-window',
+          'notepad-window',
+          'paint-window',
+          'chat-window',
+          'settings-window',
+          'minesweeper-window',
+          'browser-window',
+          'browser-window2',
+          'recycle-bin-window',
+          'command-prompt-window'
+        ];
+
+        const allOpen = windows.every(windowId => 
+          document.getElementById(windowId).style.display === 'block'
+        );
+
+        if (allOpen) {
+          unlockAchievement('tabTapper');
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        loadAchievements();
+      });
+
+      document.querySelectorAll('.start-menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+          setTimeout(checkTabTapperAchievement, 100);
+        });
+      });
+
+      function shootMusicWindow() {
+        if (!document.getElementById('music-window')) return;
+
+        const shotgun = document.querySelector('.shotgun');
+        const jerry = document.querySelector('.jerry-container');
+
+        if (shotgun && jerry) {
+          // Play shotgun sounds in sequence
+          const load = document.getElementById('shotgun-load');
+          const rack = document.getElementById('shotgun-rack');
+          const shoot = document.getElementById('shotgun-shoot');
+
+          safePlayAudio(load);
+          setTimeout(() => {
+            safePlayAudio(rack);
+            setTimeout(() => {
+              safePlayAudio(shoot);
+              // Add visual effect
+              const musicWindow = document.getElementById('music-window');
+              musicWindow.classList.add('breaking');
+              setTimeout(() => {
+                musicWindow.style.display = 'none';
+                musicWindow.classList.remove('breaking');
+                document.getElementById('tetris-theme').pause();
+                document.getElementById('minecraft-music').pause();
+                document.getElementById('loonboon-theme').pause();
+                musicPlaying = false;
+
+                // Hide shotgun after shooting
+                shotgun.style.display = 'none';
+
+                addToMessageQueue("I ****** warned you about that Tetris theme!");
+              }, 500);
+            }, 500);
+          }, 500);
+        }
+      }
+
+      document.getElementById('start-achievements').addEventListener('click', function() {
+        document.getElementById('achievements-window').style.display = 'block';
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-button').classList.remove('active');
+        startMenuOpen = false;
+        updateAchievementsWindow();
+        addToMessageQueue("Oh look, you want to see your precious achievements? Let me slow clap for your mediocre accomplishments... *slow clap*");
+      });
+
+      function updateAchievementsWindow() {
+        const achievementsList = document.getElementById('achievements-list');
+        achievementsList.innerHTML = '';
+        let unlockedCount = 0;
+
+        Object.values(achievements).forEach(achievement => {
+          const achievementElement = document.createElement('div');
+          achievementElement.className = `achievement-item ${achievement.earned ? '' : 'locked'}`;
+          
+          achievementElement.innerHTML = `
+            <div class="achievement-icon">${achievement.earned ? '★' : '?'}</div>
+            <div class="achievement-info">
+              <div class="achievement-title">${achievement.title}</div>
+              ${achievement.earned ? `<div class="achievement-description">${achievement.description}</div>` : ''}
+            </div>
+          `;
+          
+          achievementsList.appendChild(achievementElement);
+          if (achievement.earned) unlockedCount++;
+        });
+
+        document.getElementById('achievements-progress').textContent = 
+          `${unlockedCount}/${Object.keys(achievements).length} Achievements Unlocked`;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,336 @@
+<title>4D Fractal Animation Explorer - Random Edition</title>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #000;
+        font-family: Arial, sans-serif;
+    }
+    #fractalCanvas {
+        width: 100%;
+        height: 100%;
+    }
+    #infoPanel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        background-color: rgba(0,0,0,0.7);
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+<canvas id="fractalCanvas"></canvas>
+<div id="infoPanel">Random Fractal Explorer</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+<script>
+let scene, camera, renderer, material, time = 0;
+let randomizeTimer = 0;
+const randomizeInterval = 10; // Randomize every 10 seconds
+
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 1;
+
+    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('fractalCanvas'), antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    material = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            resolution: { value: new THREE.Vector2() },
+            randomSeed: { value: Math.random() },
+            complexity: { value: 3 },
+            distortionFactor: { value: 0.5 },
+            colorMix: { value: 0.5 },
+            zoom: { value: 1.0 },
+            rotationSpeed: { value: 1.0 },
+            fractalType: { value: 0 }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            #define MAX_STEPS 100
+            #define MAX_DIST 100.0
+            #define SURFACE_DIST 0.001
+            
+            uniform vec2 resolution;
+            uniform float time;
+            uniform float randomSeed;
+            uniform float complexity;
+            uniform float distortionFactor;
+            uniform float colorMix;
+            uniform float zoom;
+            uniform float rotationSpeed;
+            uniform int fractalType;
+            varying vec2 vUv;
+            
+            // ... [Previous distance functions remain the same]
+
+            float sdSphere(vec3 p, float r) {
+                return length(p) - r;
+            }
+            
+            float sdTorus(vec3 p, vec2 t) {
+                vec2 q = vec2(length(p.xz) - t.x, p.y);
+                return length(q) - t.y;
+            }
+            
+            float sdBox(vec3 p, vec3 b) {
+                vec3 q = abs(p) - b;
+                return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+            }
+            
+            float sdOctahedron(vec3 p, float s) {
+                p = abs(p);
+                return (p.x + p.y + p.z - s) * 0.57735027;
+            }
+            
+            float sdMenger(vec3 p, float s) {
+                float d = sdBox(p, vec3(s));
+                
+                float an = s / 3.0;
+                vec3 a = mod(p, an) - 0.5 * an;
+                s = s / 3.0;
+                
+                for (int n = 0; n < 3; n++) {
+                    vec3 r = abs(1.0 - 3.0 * abs(a));
+                    float da = max(r.x, r.y);
+                    float db = max(r.y, r.z);
+                    float dc = max(r.z, r.x);
+                    float c = (min(da, min(db, dc)) - 1.0) / 3.0;
+                    
+                    d = max(d, c);
+                    
+                    a = mod(a * 3.0, an) - 0.5 * an;
+                    s = s / 3.0;
+                }
+                
+                return d;
+            }
+
+            // New Julia set fractal
+            float sdJulia(vec3 p) {
+                vec3 z = p;
+                float dr = 1.0;
+                float r = 0.0;
+                for (int i = 0; i < 15; i++) {
+                    r = length(z);
+                    if (r > 2.0) break;
+                    
+                    float theta = acos(z.z / r);
+                    float phi = atan(z.y, z.x);
+                    dr = pow(r, 2.0) * 2.0 * r * dr + 1.0;
+                    
+                    float zr = pow(r, 3.0) * sin(3.0 * theta) * sin(2.0 * phi);
+                    theta = 3.0 * theta;
+                    phi = 2.0 * phi;
+                    
+                    z = zr * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+                    z += p;
+                }
+                return 0.5 * log(r) * r / dr;
+            }
+            
+            float map(vec3 p) {
+                vec3 q = p;
+                q.x += sin(time * rotationSpeed * 0.7 + randomSeed) * distortionFactor;
+                q.y += cos(time * rotationSpeed * 0.8 + randomSeed) * distortionFactor;
+                q.z += sin(time * rotationSpeed * 0.9 + randomSeed) * distortionFactor;
+                
+                q *= zoom;
+                
+                float result;
+                if (fractalType == 0) {
+                    float sphere = sdSphere(q, 0.5);
+                    float torus = sdTorus(q, vec2(0.7, 0.3));
+                    float box = sdBox(q, vec3(0.4));
+                    float octahedron = sdOctahedron(q, 0.6);
+                    float menger = sdMenger(q * 0.5, 1.0);
+                    
+                    float t = sin(time * rotationSpeed + randomSeed) * 0.5 + 0.5;
+                    float d1 = mix(sphere, torus, t);
+                    float d2 = mix(box, octahedron, t);
+                    float d3 = mix(d1, d2, sin(time * rotationSpeed * 0.3 + randomSeed) * 0.5 + 0.5);
+                    
+                    result = mix(d3, menger, sin(time * rotationSpeed * 0.2 + randomSeed) * 0.5 + 0.5);
+                } else {
+                    result = sdJulia(q);
+                }
+                
+                return result;
+            }
+            
+            vec3 calcNormal(vec3 p) {
+                const float h = 0.0001;
+                const vec2 k = vec2(1, -1);
+                return normalize(k.xyy * map(p + k.xyy * h) +
+                                 k.yyx * map(p + k.yyx * h) +
+                                 k.yxy * map(p + k.yxy * h) +
+                                 k.xxx * map(p + k.xxx * h));
+            }
+            
+            void main() {
+                vec2 uv = (gl_FragCoord.xy - 0.5 * resolution.xy) / resolution.y;
+                vec3 ro = vec3(0, 0, -3);
+                vec3 rd = normalize(vec3(uv, 1));
+                
+                float d = 0.0;
+                float t = 0.0;
+                for (int i = 0; i < MAX_STEPS; i++) {
+                    vec3 p = ro + rd * t;
+                    d = map(p);
+                    if (d < SURFACE_DIST || t > MAX_DIST) break;
+                    t += d;
+                }
+                
+                vec3 color = vec3(0);
+                if (t < MAX_DIST) {
+                    vec3 p = ro + rd * t;
+                    vec3 normal = calcNormal(p);
+                    vec3 lightDir = normalize(vec3(1, 1, -1));
+                    float diff = max(dot(normal, lightDir), 0.0);
+                    vec3 baseColor = mix(vec3(1, 0.7, 0.3), vec3(0.3, 0.5, 0.7), colorMix);
+                    color = baseColor * diff;
+                    
+                    // Add some color based on position and normal
+                    color += 0.2 * sin(p * 5.0 + time * rotationSpeed);
+                    color += 0.1 * normal;
+                    
+                    // Add specular highlight
+                    vec3 reflectDir = reflect(-lightDir, normal);
+                    float spec = pow(max(dot(rd, reflectDir), 0.0), 32.0);
+                    color += vec3(0.8) * spec;
+                }
+                
+                // Apply some post-processing effects
+                color = mix(color, vec3(0.1, 0.2, 0.3), 1.0 - exp(-0.0002 * t * t * t));
+                color = pow(color, vec3(0.4545)); // gamma correction
+                
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `,
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    window.addEventListener('resize', onWindowResize, false);
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    material.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    time += 0.01;
+    material.uniforms.time.value = time;
+    
+    // Randomize parameters periodically
+    randomizeTimer += 0.01;
+    if (randomizeTimer >= randomizeInterval) {
+        randomizeParameters();
+        randomizeTimer = 0;
+    }
+    
+    renderer.render(scene, camera);
+}
+
+function randomizeParameters() {
+    material.uniforms.randomSeed.value = Math.random();
+    material.uniforms.complexity.value = Math.random() * 4 + 1;
+    material.uniforms.distortionFactor.value = Math.random();
+    material.uniforms.colorMix.value = Math.random();
+    material.uniforms.zoom.value = Math.random() * 1.5 + 0.5;
+    material.uniforms.rotationSpeed.value = Math.random() * 2 + 0.5;
+    material.uniforms.fractalType.value = Math.random() > 0.5 ? 1 : 0;
+    
+    // Update GUI
+    for (let i in gui.__controllers) {
+        gui.__controllers[i].updateDisplay();
+    }
+    
+    updateInfoPanel();
+}
+
+function updateInfoPanel() {
+    const info = document.getElementById('infoPanel');
+    info.innerHTML = `
+        Random Fractal Explorer<br>
+        Complexity: ${material.uniforms.complexity.value.toFixed(2)}<br>
+        Distortion: ${material.uniforms.distortionFactor.value.toFixed(2)}<br>
+        Zoom: ${material.uniforms.zoom.value.toFixed(2)}<br>
+        Rotation Speed: ${material.uniforms.rotationSpeed.value.toFixed(2)}<br>
+        Fractal Type: ${material.uniforms.fractalType.value === 0 ? 'Mixed' : 'Julia'}
+    `;
+}
+
+init();
+onWindowResize();
+animate();
+
+// Add GUI controls
+const gui = new dat.GUI();
+const folder = gui.addFolder('Fractal Parameters');
+const params = {
+    complexity: 3,
+    distortionFactor: 0.5,
+    colorMix: 0.5,
+    zoom: 1.0,
+    rotationSpeed: 1.0,
+    fractalType: 0
+};
+
+folder.add(params, 'complexity', 1, 5).onChange((value) => {
+    material.uniforms.complexity.value = value;
+});
+
+folder.add(params, 'distortionFactor', 0, 1).onChange((value) => {
+    material.uniforms.distortionFactor.value = value;
+});
+
+folder.add(params, 'colorMix', 0, 1).onChange((value) => {
+    material.uniforms.colorMix.value = value;
+});
+
+folder.add(params, 'zoom', 0.1, 2).onChange((value) => {
+    material.uniforms.zoom.value = value;
+});
+
+folder.add(params, 'rotationSpeed', 0.1, 3).onChange((value) => {
+    material.uniforms.rotationSpeed.value = value;
+});
+
+folder.add(params, 'fractalType', { Mixed: 0, Julia: 1 }).onChange((value) => {
+    material.uniforms.fractalType.value = parseInt(value);
+});
+
+folder.add({ randomize: randomizeParameters }, 'randomize');
+
+folder.open();
+
+function updateGUI() {
+    for (let i in gui.__controllers) {
+        gui.__controllers[i].updateDisplay();
+    }
+}
+</script>
+</body>
+</html>
